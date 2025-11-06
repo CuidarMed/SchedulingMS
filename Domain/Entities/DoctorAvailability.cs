@@ -1,12 +1,12 @@
 ﻿using Domain.Enum;
 using System.ComponentModel.DataAnnotations;
 
-namespace Domain.Enum
+namespace Domain.Entities
 {
     public class DoctorAvailability
     {
         [Key]
-        public long Id { get; set; }
+        public long AvailabilityId { get; set; }
 
         [Required]
         public long DoctorId { get; set; } // Referencia externa al doctor (DirectoryMS)

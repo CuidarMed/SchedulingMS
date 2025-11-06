@@ -4,9 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<AvailabilityBlock> AvailabilityBlocks { get; set; }
         public DbSet<DoctorAvailability> DoctorAvailabilities { get; set; }
@@ -37,8 +36,8 @@ namespace Infrastructure.Persistence
             modelBuilder.Entity<AvailabilityBlock>(entity =>
             {
                 entity.ToTable("AvailabilityBlock");
-                entity.HasKey(e => e.Id);
-                entity.Property(c => c.Id).ValueGeneratedOnAdd(); //autogenerada
+                entity.HasKey(e => e.BlockId);
+                entity.Property(c => c.BlockId).ValueGeneratedOnAdd(); //autogenerada
                 entity.Property(e => e.DoctorId).IsRequired();
                 entity.Property(e => e.StartTime).IsRequired();
                 entity.Property(e => e.EndTime).IsRequired();
@@ -55,8 +54,8 @@ namespace Infrastructure.Persistence
             modelBuilder.Entity<DoctorAvailability>(entity =>
             {
                 entity.ToTable("DoctorAvailability");
-                entity.HasKey(e => e.Id);
-                entity.Property(c => c.Id).ValueGeneratedOnAdd(); //autogenerada
+                entity.HasKey(e => e.AvailabilityId);
+                entity.Property(c => c.AvailabilityId).ValueGeneratedOnAdd(); //autogenerada
                 entity.Property(e => e.DoctorId).IsRequired();
                 entity.Property(e => e.DayOfWeek).IsRequired();
                 entity.Property(e => e.StartTime).IsRequired();
@@ -66,6 +65,7 @@ namespace Infrastructure.Persistence
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.UpdatedAt).IsRequired();
             });
+            base.OnModelCreating(modelBuilder);
         }
 
     }

@@ -5,7 +5,7 @@ namespace Domain.Entities
     public class AvailabilityBlock
     {
         [Key]
-        public long Id { get; set; }
+        public long BlockId { get; set; }
 
         [Required]
         public long DoctorId { get; set; }  // Referencia al doctor (DirectoryMS)
