@@ -3,12 +3,18 @@ using Application.Interfaces;
 using Application.Services;
 using FluentValidation;
 using Infrastructure.Command;
+<<<<<<< HEAD
 using Infrastructure.Dependencias;   
 using Infrastructure.Persistence;
 using Infrastructure.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+=======
+using Infrastructure.Dependencias;
+using Infrastructure.Queries;
+using Microsoft.AspNetCore.Mvc;
+>>>>>>> feature/CreacionEndPointAvillityBlog
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,15 +46,17 @@ builder.Services.AddValidatorsFromAssembly(Assembly.Load("Application"));
 // Infrastructure: DbContext + repositorios (lee ConnectionStrings:Default)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// (Opcional) CORS para front local
-builder.Services.AddCors(opt =>
-{
-    opt.AddPolicy("dev", p => p
-        .AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod());
-});
+// Interfaces 
+builder.Services.AddTransient<IAvailabilityBlockCommand, AvailabilityBlockCommand>();
+builder.Services.AddTransient<IAvailabilityBlockQuery, AvailabilityBlockQuery>();
+builder.Services.AddTransient<ICreateAvailabilityBlock, CreateAvailabilityBlock>();
+builder.Services.AddTransient<IUpdateAvailabilityBlock, UpdateAvailabilityBlock>();
+builder.Services.AddTransient<ISearchAvailabilityBlock, SearchAvailabilityBlock>();
 
+
+builder.Services.AddCors(x => x.AddDefaultPolicy(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
+
+<<<<<<< HEAD
 // Obtenego la cadena de conexión
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
@@ -73,15 +81,16 @@ builder.Services.AddScoped<ISearchAppointmentService, SearchAppointmentService>(
 builder.Services.AddScoped<IUpdateAppointmentService, UpdateAppointmentService>();
 
 // -------------------- App --------------------
+=======
+>>>>>>> feature/CreacionEndPointAvillityBlog
 var app = builder.Build();
-
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("dev");
 }
-
+app.UseCors();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
