@@ -1,0 +1,33 @@
+# =========================
+#  Build stage
+# =========================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+COPY SchedulingMS/SchedulingMS.csproj SchedulingMS/
+
+
+RUN dotnet restore SchedulingMS/SchedulingMS.csproj
+
+# Copiá el resto del código
+COPY . .
+
+# Compilá
+WORKDIR /src/SchedulingMS
+RUN dotnet publish SchedulingMS.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# =========================
+#  Runtime stage
+# =========================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:8080
+
+
+COPY --from=build /app/publish ./
+
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "SchedulingMS.dll"]
