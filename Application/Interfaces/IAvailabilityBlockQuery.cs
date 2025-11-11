@@ -10,5 +10,6 @@ namespace Application.Interfaces
     public interface IAvailabilityBlockQuery
     {
         public Task<AvailabilityBlock> GetByIdAsync(long DoctorId);
+        public Task<List<AvailabilityBlock>> GetByIdAsyncListBlocks(long DoctorId);
     }
 }

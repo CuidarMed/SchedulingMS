@@ -43,6 +43,12 @@ builder.Services.AddCors(opt =>
         .AllowAnyMethod());
 });
 
+// Interfaces 
+builder.Services.AddTransient<Application.Interfaces.ICreateAvailabilityBlock, Application.Services.CreateAvailabilityBlock>();
+builder.Services.AddTransient<Application.Interfaces.IUpdateAvailabilityBlock, Application.Services.UpdateAvailabilityBlock>();
+builder.Services.AddTransient<Application.Interfaces.ISearchAvailabilityBlock, Application.Services.SearchAvailabilityBlock>();
+
+
 // -------------------- App --------------------
 var app = builder.Build();
 
