@@ -1,9 +1,12 @@
-﻿using System.Reflection;
+﻿using Application.Command.DoctorAvailability;
+using Application.Interfaces;
+using Application.Services;
 using FluentValidation;
-using MediatR;
-using Infrastructure.Dependencias;   
+using Infrastructure.Command;
+using Infrastructure.Dependencias;
+using Infrastructure.Queries;
 using Microsoft.AspNetCore.Mvc;
-using Application.Command.DoctorAvailability;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,31 +37,24 @@ builder.Services.AddValidatorsFromAssembly(Assembly.Load("Application"));
 // Infrastructure: DbContext + repositorios (lee ConnectionStrings:Default)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// (Opcional) CORS para front local
-builder.Services.AddCors(opt =>
-{
-    opt.AddPolicy("dev", p => p
-        .AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod());
-});
-
 // Interfaces 
-builder.Services.AddTransient<Application.Interfaces.ICreateAvailabilityBlock, Application.Services.CreateAvailabilityBlock>();
-builder.Services.AddTransient<Application.Interfaces.IUpdateAvailabilityBlock, Application.Services.UpdateAvailabilityBlock>();
-builder.Services.AddTransient<Application.Interfaces.ISearchAvailabilityBlock, Application.Services.SearchAvailabilityBlock>();
+builder.Services.AddTransient<IAvailabilityBlockCommand, AvailabilityBlockCommand>();
+builder.Services.AddTransient<IAvailabilityBlockQuery, AvailabilityBlockQuery>();
+builder.Services.AddTransient<ICreateAvailabilityBlock, CreateAvailabilityBlock>();
+builder.Services.AddTransient<IUpdateAvailabilityBlock, UpdateAvailabilityBlock>();
+builder.Services.AddTransient<ISearchAvailabilityBlock, SearchAvailabilityBlock>();
 
 
-// -------------------- App --------------------
+builder.Services.AddCors(x => x.AddDefaultPolicy(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
+
 var app = builder.Build();
-
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("dev");
 }
-
+app.UseCors();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

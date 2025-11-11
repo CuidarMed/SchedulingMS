@@ -14,12 +14,10 @@ namespace Infrastructure.Queries
     public class AvailabilityBlockQuery:IAvailabilityBlockQuery
     {
         private readonly AppDbContext _context;
-        private readonly IAvailabilityBlockQuery _query;
 
-        public AvailabilityBlockQuery(AppDbContext context, IAvailabilityBlockQuery query)
+        public AvailabilityBlockQuery(AppDbContext context)
         {
             _context = context;
-            _query = query;
         }
 
         public async Task<AvailabilityBlock> GetByIdAsync(long DoctorId)

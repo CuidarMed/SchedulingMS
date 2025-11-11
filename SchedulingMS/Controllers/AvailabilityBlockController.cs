@@ -78,7 +78,7 @@ namespace SchedulingMS.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Update(long id)
+        public async Task<IActionResult> Update(long id, AvailabilityBlockUpdate availabilityBlock)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace SchedulingMS.Controllers
                 {
                     return BadRequest(new { message = "The data provided is not valid." });
                 }
-                var task = await _updateService.ServiceUpdateItemStatus(id);
+                var task = await _updateService.Update(id,availabilityBlock);
                 return Ok(task);
             }
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class UpdateAvailabilityBlock:IUpdateAvailabilityBlock
+    public class UpdateAvailabilityBlock : IUpdateAvailabilityBlock
     {
         private readonly IAvailabilityBlockCommand command;
         private readonly IAvailabilityBlockQuery query;
@@ -19,38 +19,25 @@ namespace Application.Services
             this.query = query;
         }
 
-        public async Task<AvailabilityBlockUpdate> ServiceUpdateDishTask(long DoctorId, AvailabilityBlockUpdate DishDto)
+        public async Task<AvailabilityBlockUpdate> Update(long DoctorId, AvailabilityBlockUpdate availabilityBlock)
         {
             var block = await query.GetByIdAsync(DoctorId);
-            dish.Name = DishDto.name;
-            dish.Description = DishDto.description;
-            dish.Price = DishDto.price;
-            dish.Category = DishDto.category;
-            dish.ImageUrl = DishDto.image;
-            dish.Available = DishDto.isActive;
-            dish.UpdateDate = DateTime.Now;
+            block.StartTime = availabilityBlock.StartTime;  
+            block.EndTime = availabilityBlock.EndTime;
+            block.Reason = availabilityBlock.Reason;
+            block.IsBlock = availabilityBlock.IsActive ?? block.IsBlock;
 
-            await command.CommandUpdateDishTask(dish);
+            await command.UpdateAsync(block);
 
-            var result = await query.BuscarId(Id);
-
-            var DishResponseDto = new DishResponseDto
+            var BlockResponseDto = new AvailabilityBlockUpdate
             {
-                id = result.DishId,
-                name = result.Name,
-                description = result.Description,
-                price = result.Price,
-                category = new CategoryResponseDto
-                {
-                    id = result.CategoryIns.Id,
-                    name = result.CategoryIns.Name,
-                },
-                image = result.ImageUrl,
-                isActive = result.Available,
-                createdAt = result.CreateDate,
-                updatedAt = result.UpdateDate,
+                StartTime = block.StartTime,
+                EndTime = block.EndTime,
+                Reason = block.Reason,
+                IsActive = block.IsBlock
             };
 
-            return DishResponseDto;
+            return BlockResponseDto;
         }
+    }
 }
