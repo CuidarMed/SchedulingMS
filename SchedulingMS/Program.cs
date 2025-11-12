@@ -19,11 +19,10 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Services --------------------
+// -------------------- Controllers & Swagger --------------------
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(opt =>
     {
-        // Devolver ProblemDetails estándar en validaciones
         opt.InvalidModelStateResponseFactory = context =>
             new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
     });
@@ -31,10 +30,34 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// FluentValidation: valida DTOs/commands del proyecto Application
+// -------------------- FluentValidation --------------------
 builder.Services.AddValidatorsFromAssembly(Assembly.Load("Application"));
 
-// ========== AvailabilityBlock ==========
+// -------------------- Database Context --------------------
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+}
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// -------------------- CORS --------------------
+builder.Services.AddCors(x => x.AddDefaultPolicy(c =>
+    c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
+
+// -------------------- JSON Converters --------------------
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
+    });
+
+// -------------------- Domain Services --------------------
+
+// AvailabilityBlock
 builder.Services.AddScoped<ICreateAvailabilityBlockService, CreateAvailabilityBlockService>();
 builder.Services.AddScoped<IUpdateAvailabilityBlockService, UpdateAvailabilityBlockService>();
 builder.Services.AddScoped<ISearchAvailabilityBlockService, SearchAvailabilityBlockService>();
@@ -42,7 +65,7 @@ builder.Services.AddScoped<IAvailabilityBlockCommand, AvailabilityBlockCommand>(
 builder.Services.AddScoped<IAvailabilityBlockQuery, AvailabilityBlockQuery>();
 builder.Services.AddScoped<IAvailabilityBlockMapper, AvailabilityBlockMapper>();
 
-// ========== Appointment ==========
+// Appointment
 builder.Services.AddScoped<ICreateAppointmentService, CreateAppointmentService>();
 builder.Services.AddScoped<ISearchAppointmentService, SearchAppointmentService>();
 builder.Services.AddScoped<IUpdateAppointmentService, UpdateAppointmentService>();
@@ -50,49 +73,29 @@ builder.Services.AddScoped<IAppointmentCommand, AppointmentCommand>();
 builder.Services.AddScoped<IAppointmentQuery, AppointmentQuery>();
 builder.Services.AddScoped<IAppointmentMapper, AppointmentMapper>();
 
-// ========== DoctorAvailability ==========
+// DoctorAvailability
 builder.Services.AddScoped<IDoctorAvailabilityMapper, DoctorAvailabilityMapper>();
 builder.Services.AddScoped<ICreateDoctorAvailabilityService, CreateDoctorAvailabilityService>();
 builder.Services.AddScoped<IUpdateDoctorAvailabilityService, UpdateDoctorAvailabilityService>();
 builder.Services.AddScoped<ISearchDoctorAvailabilityService, SearchDoctorAvailabilityService>();
 builder.Services.AddScoped<IDoctorAvailabilityCommand, DoctorAvailabilityCommand>();
 builder.Services.AddScoped<IDoctorAvailabilityQuery, DoctorAvailabilityQuery>();
-builder.Services.AddScoped<IDoctorAvailabilityMapper, DoctorAvailabilityMapper>();
 
-
-//  ========== ConnectionString ==========
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    // Si esta parte falla, es la causa del error.
-    throw new InvalidOperationException("La cadena de conexi�n 'DefaultConnection' no fue encontrada en appsettings.json.");
-}
-
-builder.Services.AddCors(x => x.AddDefaultPolicy(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
-
-// ========== JsonStringEnumConverter ==========
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
+// -------------------- App Configuration --------------------
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
-    });
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthorization();
