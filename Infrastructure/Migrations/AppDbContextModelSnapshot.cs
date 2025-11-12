@@ -39,10 +39,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTimeOffset>("EndTime")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("MeetingURL")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<long?>("OriginalAppointmentId")
                         .HasColumnType("bigint");
 
@@ -87,11 +83,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<long>("DoctorId")
                         .HasColumnType("bigint");
 
@@ -99,6 +90,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsBlock")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Note")

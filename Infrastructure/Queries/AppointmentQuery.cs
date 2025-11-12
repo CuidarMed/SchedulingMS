@@ -1,12 +1,9 @@
-﻿using Application.Interfaces;
+﻿using Application.DTOs;
+using Application.Interfaces.IAppointment;
 using Domain.Entities;
+using Domain.Enum;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Queries
 {
@@ -25,61 +22,43 @@ namespace Infrastructure.Queries
                 .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
         }
 
-        public async Task<IEnumerable<Appointment>> GetAllAsync()
+        public async Task<IReadOnlyList<Appointment>> GetAll()
         {
             return await _context.Appointments
                 .OrderByDescending(a => a.StartTime)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Appointment>> SearchAsync(
-            long? doctorId,
-            long? patientId,
-            DateTimeOffset? startDate,
-            DateTimeOffset? endDate,
-            string? status,
-            int pageNumber,
-            int pageSize)
+        public async Task<IReadOnlyList<Appointment>> SearchAsync(AppointmentSearch search)
         {
             var query = _context.Appointments.AsQueryable();
 
-            if (doctorId.HasValue)
-                query = query.Where(a => a.DoctorId == doctorId.Value);
+            if (search.DoctorId.HasValue)
+                query = query.Where(a => a.DoctorId == search.DoctorId.Value);
 
-            if (patientId.HasValue)
-                query = query.Where(a => a.PatientId == patientId.Value);
+            if (search.PatientId.HasValue)
+                query = query.Where(a => a.PatientId == search.PatientId.Value);
 
-            if (startDate.HasValue)
-                query = query.Where(a => a.StartTime >= startDate.Value);
+            if (search.StartTime.HasValue)
+                query = query.Where(a => a.StartTime >= search.StartTime.Value);
 
-            if (endDate.HasValue)
-                query = query.Where(a => a.EndTime <= endDate.Value);
+            if (search.EndTime.HasValue)
+                query = query.Where(a => a.EndTime <= search.EndTime.Value);
 
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(a => a.Status == status);
+            if (search.Status.HasValue)
+                query = query.Where(a => a.Status == search.Status.Value);
 
-            return await query
-                .OrderBy(a => a.StartTime)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            return await query.OrderBy(a => a.StartTime).ToListAsync();
         }
 
-        public async Task<bool> HasConflictAsync(
-            long doctorId,
-            DateTimeOffset startTime,
-            DateTimeOffset endTime,
-            long? excludeAppointmentId = null)
+        public async Task<bool> HasConflictAsync(long doctorId, DateTimeOffset start, DateTimeOffset end)
         {
-            var query = _context.Appointments
-                .Where(a => a.DoctorId == doctorId &&
-                           a.Status != "CANCELLED" &&
-                           ((a.StartTime < endTime && a.EndTime > startTime)));
-
-            if (excludeAppointmentId.HasValue)
-                query = query.Where(a => a.AppointmentId != excludeAppointmentId.Value);
-
-            return await query.AnyAsync();
+            return await _context.Appointments
+        .AnyAsync(a =>
+            a.DoctorId == doctorId &&
+            a.Status != AppointmentStatus.CANCELLED &&
+            a.StartTime < end &&
+            a.EndTime > start);
         }
     }
 }

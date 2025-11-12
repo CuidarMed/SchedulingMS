@@ -1,18 +1,16 @@
-﻿using Domain.Enum;
-using System.ComponentModel.DataAnnotations;
+﻿using Application.Converters;
+using Domain.Enum;
+using System.Text.Json.Serialization;
 
 namespace Application.DTOs
 {
     public class DoctorAvailabilityCreate
     {
-        [Required]
         public WeekDay DayOfWeek { get; set; }
-        [Required]
+        [JsonConverter(typeof(TimeSpanToStringConverter))]
         public TimeSpan StartTime { get; set; }
-        [Required]
+        [JsonConverter(typeof(TimeSpanToStringConverter))]
         public TimeSpan EndTime { get; set; }
-        [Required]
-        [Range(5, 45, ErrorMessage = "La duración debe ser entre 5 y 45 minutos.")]
         public int DurationMinutes { get; set; }
     }
 }

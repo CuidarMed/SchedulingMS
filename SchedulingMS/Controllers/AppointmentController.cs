@@ -1,131 +1,116 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
-using Microsoft.AspNetCore.Http;
+using Application.Interfaces.IAppointment;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SchedulingMS.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class AppointmentController : ControllerBase
+    public class AppointmentsController : ControllerBase
     {
-        private readonly ICreateAppointmentService _createAppointmentService;
-        private readonly ISearchAppointmentService _searchAppointmentService;
-        private readonly IUpdateAppointmentService _updateAppointmentService;
+        private readonly ICreateAppointmentService _createService;
+        private readonly ISearchAppointmentService _searchService;
+        private readonly IUpdateAppointmentService _updateService;
 
-        public AppointmentController(
-            ICreateAppointmentService createAppointmentService,
-            ISearchAppointmentService searchAppointmentService,
-            IUpdateAppointmentService updateAppointmentService)
+        public AppointmentsController(
+            ICreateAppointmentService createService,
+            ISearchAppointmentService searchService,
+            IUpdateAppointmentService updateService)
         {
-            _createAppointmentService = createAppointmentService;
-            _searchAppointmentService = searchAppointmentService;
-            _updateAppointmentService = updateAppointmentService;
+            _createService = createService;
+            _searchService = searchService;
+            _updateService = updateService;
         }
 
-        /// <summary>
-        /// POST /api/v1/appointments - Crear turno
-        /// </summary>
+        // POST: api/appointments
         [HttpPost]
-        public async Task<ActionResult<AppointmentResponse>> Create([FromBody] AppointmentCreate request)
+        public async Task<IActionResult> Create([FromBody] AppointmentCreate request)
         {
             try
             {
-                var result = await _createAppointmentService.CreateAsync(request);
+                var result = await _createService.CreateAsync(request);
                 return CreatedAtAction(nameof(GetById), new { id = result.AppointmentId }, result);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
             }
         }
 
-        /// <summary>
-        /// GET /api/v1/appointments/{id} - Obtener turno por ID
-        /// </summary>
-        [ApiExplorerSettings(IgnoreApi = true)]
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AppointmentResponse>> GetById(long id)
+        // GET: api/appointments/{id}
+        [HttpGet("{id:long}")]
+        public async Task<IActionResult> GetById(long id)
         {
-            try
-            {
-                var result = await _searchAppointmentService.GetByIdAsync(id);
-                if (result == null)
-                    return NotFound(new { message = "Turno no encontrado" });
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            var appointment = await _searchService.GetByIdAsync(id);
+            if (appointment == null) return NotFound();
+            return Ok(appointment);
         }
 
-        /// <summary>
-        /// GET /api/v1/appointments - Buscar turnos
-        /// </summary>
+        // GET: api/appointments
+        // Soporta filtros opcionales
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppointmentResponse>>> Search([FromQuery] AppointmentSearch search)
+        public async Task<IActionResult> Search(
+            [FromQuery] long? doctorId,
+            [FromQuery] long? patientId,
+            [FromQuery] DateTimeOffset? startTime,
+            [FromQuery] DateTimeOffset? endTime,
+            [FromQuery] Domain.Enum.AppointmentStatus? status)
+        {
+            var searchDto = new AppointmentSearch
+            {
+                DoctorId = doctorId,
+                PatientId = patientId,
+                StartTime = startTime,
+                EndTime = endTime,
+                Status = status
+            };
+
+            var appointments = await _searchService.SearchAsync(searchDto);
+            return Ok(appointments);
+        }
+
+        // PUT: api/appointments/{id}/reschedule
+        [HttpPatch("{id:long}/reschedule")]
+        public async Task<IActionResult> Reschedule(long id, [FromBody] AppointmentReschedule request)
         {
             try
             {
-                var result = await _searchAppointmentService.SearchAsync(search);
-                return Ok(result);
+                var updated = await _updateService.RescheduleAsync(id, request);
+                return Ok(updated);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
             }
         }
 
-        /// <summary>
-        /// PATCH /api/v1/appointments/{id}/cancel - Cancelar turno
-        /// </summary>
-        [HttpPatch("{id}/cancel")]
-        public async Task<ActionResult<AppointmentResponse>> Cancel(long id, [FromBody] AppointmentCancel request)
+        // PUT: api/appointments/{id}/cancel
+        [HttpPatch("{id:long}/cancel")]
+        public async Task<IActionResult> Cancel(long id, [FromBody] AppointmentCancel request)
         {
             try
             {
-                var result = await _updateAppointmentService.CancelAsync(id, request);
-                return Ok(result);
+                var updated = await _updateService.CancelAsync(id, request);
+                return Ok(updated);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
             }
         }
 
-        /// <summary>
-        /// PATCH /api/v1/appointments/{id}/attendance - Marcar asistencia
-        /// </summary>
-        [HttpPatch("{id}/attendance")]
-        public async Task<ActionResult<AppointmentResponse>> UpdateAttendance(long id, [FromBody] AppointmentAttendance request)
+        // PUT: api/appointments/{id}/attendance
+        [HttpPatch("{id:long}/attendance")]
+        public async Task<IActionResult> UpdateAttendance(long id, [FromBody] AppointmentAttendance request)
         {
             try
             {
-                var result = await _updateAppointmentService.UpdateAttendanceAsync(id, request);
-                return Ok(result);
+                var updated = await _updateService.UpdateAttendanceAsync(id, request);
+                return Ok(updated);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// PATCH /api/v1/appointments/{id}/reschedule - Reprogramar turno
-        /// </summary>
-        [HttpPatch("{id}/reschedule")]
-        public async Task<ActionResult<AppointmentResponse>> Reschedule(long id, [FromBody] AppointmentReschedule request)
-        {
-            try
-            {
-                var result = await _updateAppointmentService.RescheduleAsync(id, request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { error = ex.Message });
             }
         }
     }

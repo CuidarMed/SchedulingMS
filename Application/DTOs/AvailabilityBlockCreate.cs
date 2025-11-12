@@ -1,17 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 
-namespace Application.DTOs
+public class AvailabilityBlockCreate
 {
-    public class AvailabilityBlockCreate
-    {
-        [Required]
-        public DateTimeOffset StartTime { get; set; }
 
-        [Required]
-        public DateTimeOffset EndTime { get; set; }
+    public DateTimeOffset? StartTime { get; set; }
 
-        [Required]
-        [StringLength(255)]
-        public string? Reason { get; set; }
-    }
+    public DateTimeOffset? EndTime { get; set; }
+
+    public string? Reason { get; set; }
+    public string? Note { get; set; }
+    public bool AllDay { get; set; } = false;
 }

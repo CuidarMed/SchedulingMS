@@ -1,16 +1,12 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.IAvailabilityBlock;
 using Domain.Entities;
 using Infrastructure.Persistence;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Command
+namespace Infrastructure.Commands
 {
-    public class AvailabilityBlockCommand: IAvailabilityBlockCommand
+    public class AvailabilityBlockCommand : IAvailabilityBlockCommand
     {
         private readonly AppDbContext _context;
 
@@ -23,13 +19,28 @@ namespace Infrastructure.Command
         {
             _context.AvailabilityBlocks.Add(availabilityBlock);
             await _context.SaveChangesAsync();
+
             return availabilityBlock;
         }
+
         public async Task<AvailabilityBlock> UpdateAsync(AvailabilityBlock availabilityBlock)
         {
             _context.AvailabilityBlocks.Update(availabilityBlock);
             await _context.SaveChangesAsync();
+
             return availabilityBlock;
+        }
+
+        public async Task<bool> DeleteAsync(long doctorId, long blockId)
+        {
+            var block = await _context.AvailabilityBlocks.FindAsync(doctorId, blockId);
+            if (block == null)
+                return false;
+
+            _context.AvailabilityBlocks.Remove(block);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

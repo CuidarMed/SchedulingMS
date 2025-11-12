@@ -1,108 +1,103 @@
-﻿using Application.Command.DoctorAvailability;
-using Application.DTOs;
-using Application.Interfaces;
-using Application.Queries.DoctorAvailability;
-using MediatR;
+﻿using Application.DTOs;
+using Application.Interfaces.IAvailabilityBlock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace SchedulingMS.Controllers
 {
-    [Route("/api/v1/doctors/")]
+    [ApiController]
+    [Route("api/v1/doctors/{doctorId:long}/blocks")]
     public class AvailabilityBlockController : ControllerBase
     {
-        private readonly ICreateAvailabilityBlock _createService;
-        private readonly ISearchAvailabilityBlock _searchService;
-        private readonly IUpdateAvailabilityBlock _updateService;
+        private readonly ICreateAvailabilityBlockService _createService;
+        private readonly ISearchAvailabilityBlockService _searchService;
+        private readonly IUpdateAvailabilityBlockService _updateService;
 
-        public AvailabilityBlockController(ICreateAvailabilityBlock createService, ISearchAvailabilityBlock searchService, IUpdateAvailabilityBlock updateService)
+        public AvailabilityBlockController(
+            ICreateAvailabilityBlockService createService,
+            ISearchAvailabilityBlockService searchService,
+            IUpdateAvailabilityBlockService updateService)
         {
             _createService = createService;
             _searchService = searchService;
             _updateService = updateService;
         }
 
-        [HttpPost("{doctorId}/blocks")]
+        // POST /api/v1/doctors/{doctorId}/blocks
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Create(AvailabilityBlockCreate dto)
+        public async Task<IActionResult> Create([FromRoute] long doctorId, [FromBody] AvailabilityBlockCreate dto)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return BadRequest(new { message = "The data provided is not valid." });
-                }
-                var newAvailabityBlock = await _createService.CreateAvailabilityBlockAsync(dto);
-                return Created(string.Empty, newAvailabityBlock);
+                    return BadRequest(new { message = "Los datos enviados no son válidos." });
+
+                var newBlock = await _createService.CreateAsync(doctorId, dto);
+                return CreatedAtAction(nameof(GetByDoctor), new { doctorId }, newBlock);
             }
-            catch (InvalidOperationException argEx)
+            catch (InvalidOperationException ex)
             {
-                return Conflict(new { message = argEx.Message });
+                return Conflict(new { message = ex.Message });
             }
-            catch (DbUpdateConcurrencyException ex)
+            catch (DbUpdateException)
             {
-                return BadRequest(new { message = "Error DbUpdateConcurrency." });
+                return BadRequest(new { message = "Error al guardar el bloqueo en la base de datos." });
             }
-            catch (DbUpdateException ex)
+            catch (Exception)
             {
-                return BadRequest(new { message = "Error DbUpdate." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = "A mistake has occurred." });
+                return BadRequest(new { message = "Ha ocurrido un error inesperado." });
             }
         }
 
-        
-        [HttpGet("{doctorId}/blocks")]
+        // GET /api/v1/doctors/{doctorId}/blocks
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Get(long DoctorId)
+        public async Task<IActionResult> GetByDoctor([FromRoute] long doctorId)
         {
             try
             {
-                var project = await _searchService.GetByIdAsyncList(DoctorId);
-                return Ok(project);
+                var blocks = await _searchService.GetByDoctorAsync(doctorId);
+                return Ok(blocks);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(new { message = "Parámetros de ordenamiento inválidos." });
+                return BadRequest(new { message = "No se pudieron obtener los bloqueos." });
             }
         }
 
-        
-        [HttpPatch("{doctorId}/blocks/{id}")]
+        // PATCH /api/v1/doctors/{doctorId}/blocks/{id}
+        [HttpPatch("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Update(long id, AvailabilityBlockUpdate availabilityBlock)
+        public async Task<IActionResult> Update([FromRoute] long doctorId, [FromRoute] long id, [FromBody] AvailabilityBlockUpdate dto)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return BadRequest(new { message = "The data provided is not valid." });
-                }
-                var task = await _updateService.Update(id,availabilityBlock);
-                return Ok(task);
-            }
+                    return BadRequest(new { message = "Los datos enviados no son válidos." });
 
-            catch (InvalidOperationException argEx)
-            {
-                return BadRequest(new { message = argEx.Message });
-            }
+                var updated = await _updateService.UpdateAsync(doctorId, id, dto);
+                if (updated == null)
+                    return NotFound(new { message = "El bloqueo no existe." });
 
-            catch (ArgumentNullException argEx)
-            {
-                return BadRequest(new { message = argEx.Message });
+                return Ok(updated);
             }
-
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = "A mistake has occurred." });
+                return Conflict(new { message = ex.Message });
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { message = "Ha ocurrido un error inesperado." });
             }
         }
     }
