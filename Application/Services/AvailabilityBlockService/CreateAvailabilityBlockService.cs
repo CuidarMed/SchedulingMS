@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.IAvailabilityBlock;
+using Application.Validators.AvailabilityBlock;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;

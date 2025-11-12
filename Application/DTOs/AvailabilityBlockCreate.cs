@@ -3,10 +3,9 @@ using System.Text.Json.Serialization;
 
 public class AvailabilityBlockCreate
 {
-    [JsonConverter(typeof(DateTimeOffsetConverter))]
+
     public DateTimeOffset? StartTime { get; set; }
 
-    [JsonConverter(typeof(DateTimeOffsetConverter))]
     public DateTimeOffset? EndTime { get; set; }
 
     public string? Reason { get; set; }

@@ -51,24 +51,14 @@ namespace Infrastructure.Queries
             return await query.OrderBy(a => a.StartTime).ToListAsync();
         }
 
-
-        public async Task<bool> HasConflictAsync(long doctorId, DateTimeOffset startTime, DateTimeOffset endTime, long? excludeAppointmentId = null)
+        public async Task<bool> HasConflictAsync(long doctorId, DateTimeOffset start, DateTimeOffset end)
         {
-            var query = _context.Appointments
-                .Where(a => a.DoctorId == doctorId &&
-                            a.Status != AppointmentStatus.CANCELLED &&
-                            a.StartTime < endTime &&
-                            a.EndTime > startTime);
-
-            if (excludeAppointmentId.HasValue)
-                query = query.Where(a => a.AppointmentId != excludeAppointmentId.Value);
-
-            return await query.AnyAsync();
-        }
-
-        public Task<bool> HasConflictAsync(long doctorId, DateTimeOffset start, DateTimeOffset end)
-        {
-            throw new NotImplementedException();
+            return await _context.Appointments
+        .AnyAsync(a =>
+            a.DoctorId == doctorId &&
+            a.Status != AppointmentStatus.CANCELLED &&
+            a.StartTime < end &&
+            a.EndTime > start);
         }
     }
 }
