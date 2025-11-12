@@ -6,10 +6,13 @@ services:
     container_name: schedulingms_api
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__Default: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
+      AuthMS__BaseUrl: "http://authms_api:8080"
+      ClinicalMS__BaseUrl: "http://clinicalms_api:8080"
+      ServiceAuth__Email: "scheduling-service@cuidarmed.com"
+      ServiceAuth__Password: "ServicePassword123!"
     ports:
       - "8083:8080"
-
     networks:
       - cuidarmed_new_net
 networks:

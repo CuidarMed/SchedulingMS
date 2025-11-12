@@ -1,6 +1,8 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.IAppointment;
+using Application.Interfaces.IClinical;
 using Domain.Enum;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services.AppointmentService
 {
@@ -9,15 +11,21 @@ namespace Application.Services.AppointmentService
         private readonly IAppointmentCommand _command;
         private readonly IAppointmentQuery _query;
         private readonly IAppointmentMapper _mapper;
+        private readonly IClinicalService _clinicalService;
+        private readonly ILogger<UpdateAppointmentService> _logger;
 
         public UpdateAppointmentService(
             IAppointmentCommand command,
             IAppointmentQuery query,
-            IAppointmentMapper mapper)
+            IAppointmentMapper mapper,
+            IClinicalService clinicalService,
+            ILogger<UpdateAppointmentService> logger)
         {
             _command = command;
             _query = query;
             _mapper = mapper;
+            _clinicalService = clinicalService;
+            _logger = logger;
         }
 
         public async Task<AppointmentResponse> CancelAsync(long id, AppointmentCancel request)
@@ -28,6 +36,26 @@ namespace Application.Services.AppointmentService
 
             if (appointment.Status == AppointmentStatus.CANCELLED)
                 throw new InvalidOperationException("Appointment is already cancelled.");
+
+            // Verificar si existe un encounter en ClinicalMS antes de cancelar
+            // Si existe, podría requerir una acción adicional o prevenir la cancelación
+            try
+            {
+                var hasEncounter = await _clinicalService.HasEncounterForAppointmentAsync(id);
+                if (hasEncounter)
+                {
+                    _logger.LogWarning(
+                        "Intento de cancelar appointment {AppointmentId} que ya tiene un encounter en ClinicalMS",
+                        id);
+                    // Opcional: podrías lanzar una excepción o solo loguear
+                    // throw new InvalidOperationException("No se puede cancelar un appointment que ya tiene un encounter clínico.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al verificar encounter en ClinicalMS para appointment {AppointmentId}", id);
+                // Continuar con la cancelación aunque falle la verificación
+            }
 
             appointment.Status = AppointmentStatus.CANCELLED;
             appointment.Reason = request.Reason;

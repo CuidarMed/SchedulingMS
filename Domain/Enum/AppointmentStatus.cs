@@ -13,6 +13,7 @@ namespace Domain.Enum
         RESCHEDULED = 3, // Se reprogramó (genera nuevo turno)
         CANCELLED = 4,   // Cancelado por doctor o paciente
         COMPLETED = 5,   // Atendido exitosamente
-        NO_SHOW = 6      // Paciente no asistió
+        NO_SHOW = 6,     // Paciente no asistió
+        IN_PROGRESS = 7  // Consulta en curso
     }
 }

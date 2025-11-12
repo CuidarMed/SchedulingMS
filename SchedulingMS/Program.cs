@@ -2,6 +2,8 @@
 using Application.Interfaces.IAppointment;
 using Application.Interfaces.IAvailabilityBlock;
 using Application.Interfaces.IDoctorAvailability;
+using Application.Interfaces.IClinical;
+using Application.Interfaces.IAuth;
 using Application.Mappers;
 using Application.Services;
 using Application.Services.AppointmentService;
@@ -12,12 +14,7 @@ using Domain.Entities;
 using FluentValidation;
 using Infrastructure.Command;
 using Infrastructure.Commands;
-
-<<<<<<< HEAD
-using Infrastructure.Dependencias;
-=======
-using Infrastructure.Commands;
->>>>>>> fix/refactoring-de-appointmentVOL2
+using Infrastructure.Handlers;
 using Infrastructure.Persistence;
 using Infrastructure.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -38,18 +35,6 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-<<<<<<< HEAD
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(UpdateDoctorAvailabilityHandler).Assembly));
-builder.Services.AddValidatorsFromAssembly(typeof(UpdateDoctorAvailabilityHandler).Assembly);
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateDoctorAvailabilityHandler).Assembly));
-builder.Services.AddValidatorsFromAssembly(typeof(CreateDoctorAvailabilityHandler).Assembly);
-
-// MediatR: registra handlers del proyecto Application
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
-=======
-
->>>>>>> fix/refactoring-de-appointmentVOL2
 
 // FluentValidation: valida DTOs/commands del proyecto Application
 builder.Services.AddValidatorsFromAssembly(Assembly.Load("Application"));
@@ -77,26 +62,58 @@ builder.Services.AddScoped<IUpdateDoctorAvailabilityService, UpdateDoctorAvailab
 builder.Services.AddScoped<ISearchDoctorAvailabilityService, SearchDoctorAvailabilityService>();
 builder.Services.AddScoped<IDoctorAvailabilityCommand, DoctorAvailabilityCommand>();
 builder.Services.AddScoped<IDoctorAvailabilityQuery, DoctorAvailabilityQuery>();
-builder.Services.AddScoped<IDoctorAvailabilityMapper, DoctorAvailabilityMapper>();
+
+// Obtenego la cadena de conexión
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("ConnectionString 'DefaultConnection' no configurada");
+}
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString)
+);
 
 builder.Services.AddCors(x => x.AddDefaultPolicy(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
-// ========== JsonStringEnumConverter ==========
 
+// ========== JsonStringEnumConverter ==========
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
     });
 
-<<<<<<< HEAD
+// ========== HttpClient para AuthMS (obtener tokens de servicio) ==========
+builder.Services.AddHttpClient("AuthMS", client =>
+{
+    var baseUrl = builder.Configuration["AuthMS:BaseUrl"] ?? "http://localhost:5093";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// ========== HttpClient para ClinicalMS (con JWT) ==========
+builder.Services.AddHttpClient("ClinicalMS", client =>
+{
+    var baseUrl = builder.Configuration["ClinicalMS:BaseUrl"] ?? "http://localhost:5073";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+})
+.AddHttpMessageHandler(serviceProvider =>
+{
+    var tokenProvider = serviceProvider.GetRequiredService<IServiceTokenProvider>();
+    var logger = serviceProvider.GetRequiredService<ILogger<JwtServiceClientHandler>>();
+    return new JwtServiceClientHandler(tokenProvider, logger);
+});
+
+// ========== Servicios de comunicación entre microservicios ==========
+builder.Services.AddSingleton<IServiceTokenProvider, ServiceTokenProvider>();
+builder.Services.AddScoped<IClinicalService, ClinicalService>();
+
 var app = builder.Build();
 
+// ========== Aplicar migraciones ==========
 using (var scope = app.Services.CreateScope())
-=======
-// Obtenego la cadena de conexión
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
->>>>>>> fix/refactoring-de-appointmentVOL2
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -124,21 +141,6 @@ if (string.IsNullOrEmpty(connectionString))
     }
 }
 
-<<<<<<< HEAD
-=======
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString) // Pasa la cadena LEÍDA aquí
-);
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
-    });
-
-
-var app = builder.Build();
->>>>>>> fix/refactoring-de-appointmentVOL2
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
