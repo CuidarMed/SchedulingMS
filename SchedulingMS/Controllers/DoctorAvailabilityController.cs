@@ -1,47 +1,70 @@
-﻿using Application.Command.DoctorAvailability;
-using Application.DTOs;
-using Application.Queries.DoctorAvailability;
-using MediatR;
+﻿using Application.DTOs;
+using Application.Interfaces.IDoctorAvailability;
+using Domain.Enum;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SchedulingMS.Controllers;
-
-[ApiController]
-[Route("api/v1/doctors/{doctorId:long}/availability")]
-public sealed class DoctorAvailabilityController : ControllerBase
+namespace SchedulingMS.Controllers
 {
-    private readonly IMediator _mediator;
-    public DoctorAvailabilityController(IMediator mediator) => _mediator = mediator;
-
-    // GET /api/v1/doctors/{doctorId}/availability
-    [HttpGet]
-    public async Task<ActionResult<List<DoctorAvailabilityResponse>>> Get(long doctorId, CancellationToken ct)
+    [ApiController]
+    [Route("api/v1/[controller]")]
+    public class DoctorAvailabilityController : ControllerBase
     {
-        var result = await _mediator.Send(new GetDoctorAvailabilityByDoctorQuery(doctorId), ct);
-        return Ok(result);
-    }
+        private readonly ICreateDoctorAvailabilityService _createService;
+        private readonly IUpdateDoctorAvailabilityService _updateService;
+        private readonly ISearchDoctorAvailabilityService _searchService;
 
-    // POST /api/v1/doctors/{doctorId}/availability
-    [HttpPost]
-    public async Task<ActionResult<DoctorAvailabilityResponse>> Create(long doctorId, [FromBody] DoctorAvailabilityCreate body, CancellationToken ct)
-    {
-        var result = await _mediator.Send(new CreateDoctorAvailabilityCommand(doctorId, body), ct);
-        return CreatedAtAction(nameof(Get), new { doctorId }, result);
-    }
+        public DoctorAvailabilityController(
+            ICreateDoctorAvailabilityService createService,
+            IUpdateDoctorAvailabilityService updateService,
+            ISearchDoctorAvailabilityService searchService)
+        {
+            _createService = createService;
+            _updateService = updateService;
+            _searchService = searchService;
+        }
 
-    // PATCH /api/v1/doctors/{doctorId}/availability/{id}
-    [HttpPatch("{id:long}")]
-    public async Task<ActionResult<DoctorAvailabilityResponse>> Update(long doctorId, long id, [FromBody] DoctorAvailabilityUpdate body, CancellationToken ct)
-    {
-        var result = await _mediator.Send(new UpdateDoctorAvailabilityCommand(doctorId, id, body), ct);
-        return Ok(result);
-    }
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _searchService.GetAllAsync();
+            return Ok(result);
+        }
 
-    // DELETE /api/v1/doctors/{doctorId}/availability/{id}
-    [HttpDelete("{id:long}")]
-    public async Task<ActionResult> Delete(long doctorId, long id, CancellationToken ct)
-    {
-        var ok = await _mediator.Send(new DeleteDoctorAvailabilityCommand(doctorId, id), ct);
-        return ok ? NoContent() : NotFound();
+        [HttpGet("{id:long}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            var result = await _searchService.GetByIdAsync(id);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] long? doctorId, [FromQuery] WeekDay? dayOfWeek)
+        {
+            var result = await _searchService.SearchAsync(doctorId, dayOfWeek);
+            return Ok(result);
+        }
+
+        [HttpPost("{doctorId:long}")]
+        public async Task<IActionResult> Create(long doctorId, [FromBody] DoctorAvailabilityCreate dto)
+        {
+            var result = await _createService.CreateAsync(doctorId, dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.AvailabilityId }, result);
+        }
+
+        [HttpPatch("{id:long}")]
+        public async Task<IActionResult> Update(long id, [FromBody] DoctorAvailabilityUpdate dto)
+        {
+            var result = await _updateService.UpdateAsync(id, dto);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            var deleted = await _updateService.DeleteAsync(id);
+            if (!deleted) return NotFound();
+            return NoContent();
+        }
     }
 }

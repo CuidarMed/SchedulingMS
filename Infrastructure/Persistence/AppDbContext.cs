@@ -23,9 +23,9 @@ namespace Infrastructure.Persistence
                 entity.Property(e => e.PatientId).IsRequired();
                 entity.Property(e => e.StartTime).IsRequired();
                 entity.Property(e => e.EndTime).IsRequired();
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+                // Configurar el enum como string en la DB
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasConversion<string>(); // Convertir enum a string
                 entity.Property(e => e.Reason).HasMaxLength(500);
-                entity.Property(e => e.MeetingURL).HasMaxLength(500);
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.UpdatedAt).IsRequired();
                 // Self Reference: cita original si está reprogramada
@@ -47,7 +47,6 @@ namespace Infrastructure.Persistence
                 entity.Property(e => e.AllDay).IsRequired().HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.UpdatedAt).IsRequired();
-                entity.Property(e => e.Deleted).IsRequired().HasDefaultValue(false);
             });
 
             // DOCTOR AVAILABILITIES

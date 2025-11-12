@@ -1,19 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Application.DTOs
 {
     public class AvailabilityBlockUpdate
     {
-        [Required]
-        public DateTimeOffset StartTime { get; set; }
+        [JsonConverter(typeof(DateTimeOffsetConverter))]
+        public DateTimeOffset? StartTime { get; set; }
 
-        [Required]
-        public DateTimeOffset EndTime { get; set; }
+        [JsonConverter(typeof(DateTimeOffsetConverter))]
+        public DateTimeOffset? EndTime { get; set; }
 
-        [Required]
-        [StringLength(255)]
         public string? Reason { get; set; }
-
-        public bool? IsActive { get; set; }
+        public string? Note { get; set; }
+        public bool? AllDay { get; set; }
     }
 }
