@@ -1,12 +1,12 @@
 services:
-  schedullingms:
+  schedulingms:
     build:
       context: .
       dockerfile: SchedulingMS/Dockerfile
     container_name: schedulingms_api
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
       AuthMS__BaseUrl: "http://authms_api:8080"
       ClinicalMS__BaseUrl: "http://clinicalms_api:8080"
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
