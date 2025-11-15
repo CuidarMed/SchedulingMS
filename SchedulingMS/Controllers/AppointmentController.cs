@@ -1,0 +1,171 @@
+﻿using Application.DTOs;
+using Application.Interfaces.IAppointment;
+using Microsoft.AspNetCore.Mvc;
+
+namespace SchedulingMS.Controllers
+{
+    [ApiController]
+    [Route("api/v1/[controller]")]
+    public class AppointmentsController : ControllerBase
+    {
+        private readonly ICreateAppointmentService _createService;
+        private readonly ISearchAppointmentService _searchService;
+        private readonly IUpdateAppointmentService _updateService;
+        private readonly IAppointmentCommand _command;
+
+        public AppointmentsController(
+            ICreateAppointmentService createService,
+            ISearchAppointmentService searchService,
+            IUpdateAppointmentService updateService,
+            IAppointmentCommand command)
+        {
+            _createService = createService;
+            _searchService = searchService;
+            _updateService = updateService;
+            _command = command;
+        }
+
+        // POST: api/appointments
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] AppointmentCreate request)
+        {
+            try
+            {
+                var result = await _createService.CreateAsync(request);
+                return CreatedAtAction(nameof(GetById), new { id = result.AppointmentId }, result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // GET: api/appointments/{id}
+        [HttpGet("{id:long}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            var appointment = await _searchService.GetByIdAsync(id);
+            if (appointment == null) return NotFound();
+            return Ok(appointment);
+        }
+
+        // GET: api/appointments
+        // Soporta filtros opcionales
+        [HttpGet]
+        public async Task<IActionResult> Search(
+            [FromQuery] long? doctorId,
+            [FromQuery] long? patientId,
+            [FromQuery] DateTimeOffset? startTime,
+            [FromQuery] DateTimeOffset? endTime,
+            [FromQuery] Domain.Enum.AppointmentStatus? status)
+        {
+            var searchDto = new AppointmentSearch
+            {
+                DoctorId = doctorId,
+                PatientId = patientId,
+                StartTime = startTime,
+                EndTime = endTime,
+                Status = status
+            };
+
+            var appointments = await _searchService.SearchAsync(searchDto);
+            return Ok(appointments);
+        }
+
+        // PUT: api/appointments/{id}/reschedule
+        [HttpPatch("{id:long}/reschedule")]
+        public async Task<IActionResult> Reschedule(long id, [FromBody] AppointmentReschedule request)
+        {
+            try
+            {
+                var updated = await _updateService.RescheduleAsync(id, request);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // PUT: api/appointments/{id}/cancel
+        [HttpPatch("{id:long}/cancel")]
+        public async Task<IActionResult> Cancel(long id, [FromBody] AppointmentCancel request)
+        {
+            try
+            {
+                var updated = await _updateService.CancelAsync(id, request);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // PUT: api/appointments/{id}/attendance
+        [HttpPatch("{id:long}/attendance")]
+        public async Task<IActionResult> UpdateAttendance(long id, [FromBody] AppointmentAttendance request)
+        {
+            try
+            {
+                var updated = await _updateService.UpdateAttendanceAsync(id, request);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // PATCH: api/appointments/{id}/status
+        [HttpPatch("{id:long}/status")]
+        public async Task<IActionResult> UpdateStatus(long id, [FromBody] AppointmentUpdate request)
+        {
+            try
+            {
+                var appointment = await _searchService.GetByIdAsync(id);
+                if (appointment == null)
+                    return NotFound(new { error = "Appointment not found." });
+
+                // Crear DTO completo con los datos actuales y el nuevo estado
+                var updateDto = new AppointmentUpdate
+                {
+                    DoctorId = appointment.DoctorId,
+                    PatientId = appointment.PatientId,
+                    StartTime = appointment.StartTime,
+                    EndTime = appointment.EndTime,
+                    Status = request.Status ?? appointment.Status,
+                    Reason = request.Reason ?? appointment.Reason
+                };
+
+                // Usar el método UpdateAsync del servicio
+                var updated = await _updateService.UpdateAsync(id, updateDto);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // DELETE: api/appointments/{id}
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            try
+            {
+                var appointment = await _searchService.GetByIdAsync(id);
+                if (appointment == null)
+                    return NotFound(new { error = "Appointment not found." });
+
+                // Eliminar el appointment usando el comando
+                await _command.DeleteAsync(id);
+                return Ok(new { message = "Appointment deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+    }
+}
