@@ -60,5 +60,12 @@ namespace Infrastructure.Queries
             a.StartTime < end &&
             a.EndTime > start);
         }
+
+        public async Task<List<Appointment>> GetByDoctorIdAsync(long doctorId)
+        {
+            return await _context.Appointments
+                .Where(a => a.DoctorId == doctorId)
+                .ToListAsync();
+        }
     }
 }

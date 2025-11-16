@@ -7,5 +7,7 @@ namespace Application.Interfaces.IAppointment
         Task<AppointmentResponse> GetByIdAsync(long id);
         Task<List<AppointmentResponse>> GetAllAsync();
         Task<List<AppointmentResponse>> SearchAsync(AppointmentSearch search);
+        Task<List<AppointmentResponse>> GetPatientsByDoctorIdAsync(long doctorId);
+
     }
 }

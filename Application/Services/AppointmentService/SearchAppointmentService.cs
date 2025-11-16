@@ -36,5 +36,15 @@ namespace Application.Services.AppointmentService
             // Mapear a DTOs
             return _mapper.ToResponseList(appointments.ToList());
         }
+
+        public async Task<List<AppointmentResponse>> GetPatientsByDoctorIdAsync(long doctorId)
+        {
+            var appointments = await _query.GetByDoctorIdAsync(doctorId);
+
+            if (appointments == null || !appointments.Any())
+                return new List<AppointmentResponse>();
+
+            return _mapper.ToResponseList(appointments);
+        }
     }
 }
