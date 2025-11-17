@@ -45,6 +45,7 @@ namespace Application.Services.AppointmentService
                 PatientId = request.PatientId,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
+                Reason = request.Reason,
                 Status = AppointmentStatus.SCHEDULED,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow

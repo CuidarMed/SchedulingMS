@@ -25,6 +25,7 @@ namespace Application.Services.DoctorAvailabilityService
             entity.StartTime = dto.StartTime;
             entity.EndTime = dto.EndTime;
             entity.DurationMinutes = dto.DurationMinutes;
+            entity.DayOfWeek = dto.DayOfWeek;
             entity.UpdatedAt = DateTimeOffset.UtcNow;
 
             if (dto.IsActive.HasValue)

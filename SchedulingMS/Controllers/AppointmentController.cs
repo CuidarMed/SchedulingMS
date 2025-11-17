@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.IAppointment;
+using Infrastructure.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SchedulingMS.Controllers
@@ -11,15 +12,18 @@ namespace SchedulingMS.Controllers
         private readonly ICreateAppointmentService _createService;
         private readonly ISearchAppointmentService _searchService;
         private readonly IUpdateAppointmentService _updateService;
+        private readonly IAppointmentCommand _command;
 
         public AppointmentsController(
             ICreateAppointmentService createService,
             ISearchAppointmentService searchService,
-            IUpdateAppointmentService updateService)
+            IUpdateAppointmentService updateService,
+            IAppointmentCommand command)
         {
             _createService = createService;
             _searchService = searchService;
             _updateService = updateService;
+            _command = command;
         }
 
         // POST: api/appointments
@@ -112,6 +116,64 @@ namespace SchedulingMS.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        // PATCH: api/appointments/{id}/status
+        [HttpPatch("{id:long}/status")]
+        public async Task<IActionResult> UpdateStatus(long id, [FromBody] AppointmentUpdate request)
+        {
+            try
+            {
+                var appointment = await _searchService.GetByIdAsync(id);
+                if (appointment == null)
+                    return NotFound(new { error = "Appointment not found." });
+
+                // Crear DTO completo con los datos actuales y el nuevo estado
+                var updateDto = new AppointmentUpdate
+                {
+                    DoctorId = appointment.DoctorId,
+                    PatientId = appointment.PatientId,
+                    StartTime = appointment.StartTime,
+                    EndTime = appointment.EndTime,
+                    Status = request.Status ?? appointment.Status,
+                    Reason = request.Reason ?? appointment.Reason
+                };
+
+                // Usar el método UpdateAsync del servicio
+                var updated = await _updateService.UpdateAsync(id, updateDto);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // DELETE: api/appointments/{id}
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            try
+            {
+                var appointment = await _searchService.GetByIdAsync(id);
+                if (appointment == null)
+                    return NotFound(new { error = "Appointment not found." });
+
+                // Eliminar el appointment usando el comando
+                await _command.DeleteAsync(id);
+                return Ok(new { message = "Appointment deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("doctor/{doctorId:long}/patients")]
+        public async Task<IActionResult> GetPatientsByDoctorId(long doctorId)
+        {
+            var result = await _searchService.GetPatientsByDoctorIdAsync(doctorId); 
+            return Ok(result);
         }
     }
 }

@@ -7,5 +7,6 @@ namespace Application.Interfaces.IAppointment
         Task<AppointmentResponse> RescheduleAsync(long id, AppointmentReschedule request);
         Task<AppointmentResponse> CancelAsync(long id, AppointmentCancel request);
         Task<AppointmentResponse> UpdateAttendanceAsync(long id, AppointmentAttendance request);
+        Task<AppointmentResponse> UpdateAsync(long id, AppointmentUpdate dto);
     }
 }
