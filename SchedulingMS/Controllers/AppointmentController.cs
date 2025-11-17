@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.IAppointment;
+using Infrastructure.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SchedulingMS.Controllers
@@ -166,6 +167,13 @@ namespace SchedulingMS.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        [HttpGet("doctor/{doctorId:long}/patients")]
+        public async Task<IActionResult> GetPatientsByDoctorId(long doctorId)
+        {
+            var result = await _searchService.GetPatientsByDoctorIdAsync(doctorId); 
+            return Ok(result);
         }
     }
 }

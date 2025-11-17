@@ -8,6 +8,7 @@ namespace Application.Interfaces.IAppointment
         Task<IReadOnlyList<Appointment>> GetAll();
         Task<Appointment?> GetByIdAsync(long id);
         Task<IReadOnlyList<Appointment>> SearchAsync(AppointmentSearch search);
+        Task<List<Appointment>> GetByDoctorIdAsync(long doctorId);
         Task<bool> HasConflictAsync(long doctorId, DateTimeOffset start, DateTimeOffset end);
     }
 }
