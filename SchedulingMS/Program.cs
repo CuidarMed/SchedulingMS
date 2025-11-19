@@ -12,39 +12,49 @@ using Application.Services.DoctorAvailabilityService;
 using FluentValidation;
 using Infrastructure.Command;
 using Infrastructure.Commands;
-<<<<<<< HEAD
-=======
 using Infrastructure.Handlers;
->>>>>>> feature/develop-vol1
 using Infrastructure.Persistence;
 using Infrastructure.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
+
+// BUILDER CONFIGURATION
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Controllers & Swagger --------------------
+// -------------------- 1. Core Services: MVC, Swagger, FluentValidation --------------------
+
+// Configuracion de Controllers, validación de ModelState y JSON Converters (consolidado)
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(opt =>
     {
         opt.InvalidModelStateResponseFactory = context =>
             new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
+    })
+    .AddJsonOptions(options =>
+    {
+        // JSON Converters
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-<<<<<<< HEAD
-// -------------------- FluentValidation --------------------
-=======
-// FluentValidation: valida DTOs/commands del proyecto Application
->>>>>>> feature/develop-vol1
+// Agrega los validadores definidos en el ensamblado 'Application'
 builder.Services.AddValidatorsFromAssembly(Assembly.Load("Application"));
 
-// -------------------- Database Context --------------------
+
+// -------------------- 2. Database & Connection Configuration --------------------
+
+// Se usa una sola vez la lectura y validación de la cadena de conexión
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
@@ -53,19 +63,44 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// -------------------- CORS --------------------
+// CORS
 builder.Services.AddCors(x => x.AddDefaultPolicy(c =>
     c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
 
-// -------------------- JSON Converters --------------------
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
-    });
 
-// -------------------- Domain Services --------------------
+// -------------------- 3. HttpClient & Inter-Service Communication --------------------
+
+// Servicio Singleton para obtener tokens JWT (Necesario para el JwtServiceClientHandler)
+builder.Services.AddSingleton<IServiceTokenProvider, ServiceTokenProvider>();
+
+// HttpClient para AuthMS
+builder.Services.AddHttpClient("AuthMS", client =>
+{
+    var baseUrl = builder.Configuration["AuthMS:BaseUrl"] ?? "http://localhost:5093";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// HttpClient para ClinicalMS (con JWT Handler)
+builder.Services.AddHttpClient("ClinicalMS", client =>
+{
+    var baseUrl = builder.Configuration["ClinicalMS:BaseUrl"] ?? "http://localhost:5073";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+})
+// Registra el Handler que inyectará el token JWT
+.AddHttpMessageHandler(serviceProvider =>
+{
+    var tokenProvider = serviceProvider.GetRequiredService<IServiceTokenProvider>();
+    var logger = serviceProvider.GetRequiredService<ILogger<JwtServiceClientHandler>>();
+    return new JwtServiceClientHandler(tokenProvider, logger);
+});
+
+// Servicio que utiliza el HttpClient de ClinicalMS
+builder.Services.AddScoped<IClinicalService, ClinicalService>();
+
+
+// -------------------- 4. Domain Services: Application & Infrastructure DI --------------------
 
 // AvailabilityBlock
 builder.Services.AddScoped<ICreateAvailabilityBlockService, CreateAvailabilityBlockService>();
@@ -90,59 +125,11 @@ builder.Services.AddScoped<IUpdateDoctorAvailabilityService, UpdateDoctorAvailab
 builder.Services.AddScoped<ISearchDoctorAvailabilityService, SearchDoctorAvailabilityService>();
 builder.Services.AddScoped<IDoctorAvailabilityCommand, DoctorAvailabilityCommand>();
 builder.Services.AddScoped<IDoctorAvailabilityQuery, DoctorAvailabilityQuery>();
-<<<<<<< HEAD
 
-// -------------------- App Configuration --------------------
-=======
 
-// Obtenego la cadena de conexión
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("ConnectionString 'DefaultConnection' no configurada");
-}
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString)
-);
+// APP CONFIGURATION
 
-builder.Services.AddCors(x => x.AddDefaultPolicy(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod()));
-
-// ========== JsonStringEnumConverter ==========
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
-    });
-
-// ========== HttpClient para AuthMS (obtener tokens de servicio) ==========
-builder.Services.AddHttpClient("AuthMS", client =>
-{
-    var baseUrl = builder.Configuration["AuthMS:BaseUrl"] ?? "http://localhost:5093";
-    client.BaseAddress = new Uri(baseUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
-
-// ========== HttpClient para ClinicalMS (con JWT) ==========
-builder.Services.AddHttpClient("ClinicalMS", client =>
-{
-    var baseUrl = builder.Configuration["ClinicalMS:BaseUrl"] ?? "http://localhost:5073";
-    client.BaseAddress = new Uri(baseUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
-})
-.AddHttpMessageHandler(serviceProvider =>
-{
-    var tokenProvider = serviceProvider.GetRequiredService<IServiceTokenProvider>();
-    var logger = serviceProvider.GetRequiredService<ILogger<JwtServiceClientHandler>>();
-    return new JwtServiceClientHandler(tokenProvider, logger);
-});
-
-// ========== Servicios de comunicación entre microservicios ==========
-builder.Services.AddSingleton<IServiceTokenProvider, ServiceTokenProvider>();
-builder.Services.AddScoped<IClinicalService, ClinicalService>();
-
->>>>>>> feature/develop-vol1
 var app = builder.Build();
 
 // ========== Aplicar migraciones ==========
@@ -152,10 +139,7 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-<<<<<<< HEAD
-=======
 // Configure the HTTP request pipeline.
->>>>>>> feature/develop-vol1
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
