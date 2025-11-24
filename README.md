@@ -68,12 +68,19 @@ dotnet docker compose up --build
 ```bash
 dotnet ef database update
 ```
-6. Ejecutar la aplicación:
+5. Ejecutar la aplicación:
 ```bash
 dotnet run
 ```
-8. Acceder a Swagger para explorar la API:
+6. Acceder a Swagger para explorar la API:
 ```bash
 https://localhost:5001/swagger
 ```
-
+- Si usas Docker
+```bash
+http://localhost:8083/swagger/index.html
+```
+- Si usas appsettings.json. El puerto (5001) va a variar según los que tengas disponibles
+```bash
+https://localhost:5001/swagger
+```
