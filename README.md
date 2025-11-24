@@ -46,8 +46,10 @@ Este microservicio forma parte de un ecosistema de microservicios que incluye `D
 1. Clonar el repositorio:
 
 ```bash
-git clone https://github.com/tu-usuario/CuidarMed-SchedulingMS.git
-cd CuidarMed-SchedulingMS
+https://github.com/CuidarMed/SchedulingMS.git
+```
+```bash
+cd SchedulingMS
 ```
 2. Levantar el servicio con Docker desde la raíz del proyecto:
 ```bash
@@ -62,7 +64,7 @@ dotnet docker compose up --build
   }
 }
 ```
-⚠️ Asegúrate de que el puerto, usuario y contraseña coincidan con tu contenedor Docker de SQL Server.
+**Asegúrate de que el puerto, usuario y contraseña coincidan con tu contenedor Docker de SQL Server.**
 
 4. Aplicar migraciones (si es necesario):
 ```bash
