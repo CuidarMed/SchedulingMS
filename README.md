@@ -73,9 +73,6 @@ dotnet ef database update
 dotnet run
 ```
 6. Acceder a Swagger para explorar la API:
-```bash
-https://localhost:5001/swagger
-```
 - Si usas Docker
 ```bash
 http://localhost:8083/swagger/index.html
