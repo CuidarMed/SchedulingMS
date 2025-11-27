@@ -7,8 +7,6 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
-      AuthMS__BaseUrl: "http://authms_api:8080"
-      ClinicalMS__BaseUrl: "http://clinicalms_api:8080"
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
       ServiceAuth__Password: "ServicePassword123!"
     ports:
