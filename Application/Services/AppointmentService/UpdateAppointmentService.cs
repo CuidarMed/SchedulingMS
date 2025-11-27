@@ -11,20 +11,17 @@ namespace Application.Services.AppointmentService
         private readonly IAppointmentCommand _command;
         private readonly IAppointmentQuery _query;
         private readonly IAppointmentMapper _mapper;
-        private readonly IClinicalService _clinicalService;
         private readonly ILogger<UpdateAppointmentService> _logger;
 
         public UpdateAppointmentService(
             IAppointmentCommand command,
             IAppointmentQuery query,
             IAppointmentMapper mapper,
-            IClinicalService clinicalService,
             ILogger<UpdateAppointmentService> logger)
         {
             _command = command;
             _query = query;
             _mapper = mapper;
-            _clinicalService = clinicalService;
             _logger = logger;
         }
 
@@ -41,8 +38,8 @@ namespace Application.Services.AppointmentService
             // Si existe, podría requerir una acción adicional o prevenir la cancelación
             try
             {
-                var hasEncounter = await _clinicalService.HasEncounterForAppointmentAsync(id);
-                if (hasEncounter)
+                
+                if (appointment.Status == AppointmentStatus.COMPLETED)
                 {
                     _logger.LogWarning(
                         "Intento de cancelar appointment {AppointmentId} que ya tiene un encounter en ClinicalMS",
