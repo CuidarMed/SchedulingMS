@@ -4,13 +4,16 @@ services:
       context: .
       dockerfile: SchedulingMS/Dockerfile
     container_name: schedulingms_api
+    image: cuidarmed/schedulingms:latest
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=db33326.public.databaseasp.net,1433;Database=db33326;User Id=db33326;Password=6Aw@Rk-92Ko=;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;"
       AuthMS__BaseUrl: "http://authms_api:8080"
       ClinicalMS__BaseUrl: "http://clinicalms_api:8080"
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
       ServiceAuth__Password: "ServicePassword123!"
+      Daily__ApiKey: "43f8344df211bc581ac4fde1728a6273e46a0f0bde9e8aa6bc7e503969662454"
+      Daily__ApiUrl: "https://api.daily.co"
     ports:
       - "8083:8080"
     networks:

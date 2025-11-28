@@ -56,7 +56,8 @@ namespace Infrastructure.Persistence
                 entity.HasKey(e => e.AvailabilityId);
                 entity.Property(c => c.AvailabilityId).ValueGeneratedOnAdd(); //autogenerada
                 entity.Property(e => e.DoctorId).IsRequired();
-                entity.Property(e => e.DayOfWeek).IsRequired().HasMaxLength(20).HasConversion<string>();
+                // Guardar el enum como int (1-7) en lugar de string
+                entity.Property(e => e.DayOfWeek).IsRequired().HasConversion<int>();
                 entity.Property(e => e.StartTime).IsRequired();
                 entity.Property(e => e.EndTime).IsRequired();
                 entity.Property(e => e.DurationMinutes).IsRequired();

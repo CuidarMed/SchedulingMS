@@ -4,6 +4,7 @@ using Application.Interfaces.IAvailabilityBlock;
 using Application.Interfaces.IDoctorAvailability;
 using Application.Interfaces.IClinical;
 using Application.Interfaces.IAuth;
+using Application.Interfaces.IVideo;
 using Application.Mappers;
 using Application.Services;
 using Application.Services.AppointmentService;
@@ -20,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using System.Linq;
 
 
 // BUILDER CONFIGURATION
@@ -99,6 +101,9 @@ builder.Services.AddHttpClient("ClinicalMS", client =>
 // Servicio que utiliza el HttpClient de ClinicalMS
 builder.Services.AddScoped<IClinicalService, ClinicalService>();
 
+// Video Service (Daily.co)
+builder.Services.AddScoped<IVideoService, VideoService>();
+
 
 // -------------------- 4. Domain Services: Application & Infrastructure DI --------------------
 
@@ -135,8 +140,30 @@ var app = builder.Build();
 // ========== Aplicar migraciones ==========
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        // Verificar si hay migraciones pendientes antes de aplicar
+        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Aplicando {Count} migraciones pendientes...", pendingMigrations.Count);
+            dbContext.Database.Migrate();
+            logger.LogInformation("Migraciones aplicadas exitosamente");
+        }
+        else
+        {
+            logger.LogInformation("No hay migraciones pendientes");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Error al aplicar migraciones. El servicio continuará iniciando.");
+        // No lanzar la excepción para que el servicio pueda iniciar
+    }
 }
 
 // Configure the HTTP request pipeline.
