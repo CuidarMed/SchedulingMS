@@ -1,6 +1,5 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.IAppointment;
-using Application.Interfaces.IClinical;
 using Domain.Enum;
 using Microsoft.Extensions.Logging;
 

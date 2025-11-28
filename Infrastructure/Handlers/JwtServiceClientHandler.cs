@@ -1,11 +1,10 @@
-using Application.Interfaces.IAuth;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Handlers
 {
     public class JwtServiceClientHandler : DelegatingHandler
     {
-        private readonly IServiceTokenProvider _tokenProvider;
+       /* private readonly IServiceTokenProvider _tokenProvider;
         private readonly ILogger<JwtServiceClientHandler> _logger;
 
         public JwtServiceClientHandler(
@@ -38,7 +37,7 @@ namespace Infrastructure.Handlers
             }
 
             return await base.SendAsync(request, cancellationToken);
-        }
+        }*/
     }
 }
 

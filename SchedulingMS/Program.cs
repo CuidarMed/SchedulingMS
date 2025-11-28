@@ -2,8 +2,6 @@
 using Application.Interfaces.IAppointment;
 using Application.Interfaces.IAvailabilityBlock;
 using Application.Interfaces.IDoctorAvailability;
-using Application.Interfaces.IClinical;
-using Application.Interfaces.IAuth;
 using Application.Mappers;
 using Application.Services;
 using Application.Services.AppointmentService;
