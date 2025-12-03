@@ -10,10 +10,15 @@ services:
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
       ServiceAuth__Password: "ServicePassword123!"
       Daily__ApiKey: "1d912f84e3a7021912bf2284f0f81d3419d300be2f0ba1dde1651cb04e80e40a"
+      Daily__ApiUrl: "https://api.daily.co"
+      Services__AuthMS: "http://gatewayms_api:8080/auth/api/v1"
+      Services__DirectoryMS: "http://gatewayms_api:8080/directory/api"
+
     ports:
       - "8083:8080"
     networks:
       - cuidarmed_new_net
+
 networks:
   cuidarmed_new_net:
     external: true
