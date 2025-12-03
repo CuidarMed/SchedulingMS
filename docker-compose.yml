@@ -9,6 +9,7 @@ services:
       ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
       ServiceAuth__Password: "ServicePassword123!"
+      Daily__ApiKey: "1d912f84e3a7021912bf2284f0f81d3419d300be2f0ba1dde1651cb04e80e40a"
     ports:
       - "8083:8080"
     networks:
