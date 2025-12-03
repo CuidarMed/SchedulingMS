@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,9 @@ builder.Services.AddScoped<ISearchDoctorAvailabilityService, SearchDoctorAvailab
 builder.Services.AddScoped<IDoctorAvailabilityCommand, DoctorAvailabilityCommand>();
 builder.Services.AddScoped<IDoctorAvailabilityQuery, DoctorAvailabilityQuery>();
 
+// Video Service - AddHttpClient registra el servicio automáticamente
+// El nombre del cliente HTTP es el nombre completo del tipo
+builder.Services.AddHttpClient<VideoService>();
 
 // -------------------- App Configuration --------------------
 
