@@ -2,6 +2,7 @@
 using Application.Interfaces.IAppointment;
 using Application.Interfaces.IAvailabilityBlock;
 using Application.Interfaces.IDoctorAvailability;
+using Application.Interfaces.IVideoCall;
 using Application.Mappers;
 using Application.Services;
 using Application.Services.AppointmentService;
@@ -57,6 +58,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.Converters.Add(new DateTimeOffsetConverter());
     });
+
+// -------------------- HttpClient Factory --------------------
+builder.Services.AddHttpClient();
+
+// Video Service (Daily.co)
+builder.Services.AddScoped<IVideoCallService, VideoCallService>();
 
 // -------------------- Domain Services --------------------
 

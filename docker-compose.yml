@@ -9,10 +9,15 @@ services:
       ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=SCHEDULING;User Id=sa;Password=SecurePassword123!;TrustServerCertificate=True;"
       ServiceAuth__Email: "scheduling-service@cuidarmed.com"
       ServiceAuth__Password: "ServicePassword123!"
+      Daily__ApiKey: "43f8344df211bc581ac4fde1728a6273e46a0f0bde9e8aa6bc7e503969662454"
+      Daily__ApiUrl: "https://api.daily.co"
+      Services__AuthMS: "http://gatewayms_api:8080/auth/api/v1"
+      Services__DirectoryMS: "http://gatewayms_api:8080/directory/api"
     ports:
       - "8083:8080"
     networks:
       - cuidarmed_new_net
+
 networks:
   cuidarmed_new_net:
     external: true
